@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "HTTP://mybatis.org/dtd/mybatis-3-config.dtd">
+
+<configuration>
+    <typeAliases>
+        <typeAlias type="com.kmall.domain.ProductCriteria" alias="productCriteria"/>
+        <typeAlias type="com.kmall.domain.SearchCriteria" alias="searchCriteria"/>
+        <typeAlias type="com.kmall.domain.ProductVO" alias="productVO"/>
+        <typeAlias type="com.kmall.domain.BoardVO" alias="boardVO"/>
+        <typeAlias type="com.kmall.domain.MemberVO" alias="memberVO"/>
+        <typeAlias type="com.kmall.domain.CategoryVO" alias="categoryVO"/>
+        <typeAlias type="com.kmall.domain.CartVO" alias="cartVO"/>
+        <typeAlias type="com.kmall.domain.OrderSummaryVO" alias="orderSummaryVO"/>
+        <typeAlias type="com.kmall.domain.OrderDetailVO" alias="orderDetailVO"/>
+        <typeAlias type="com.kmall.domain.ReviewVO" alias="reviewVO"/>
+    </typeAliases>
+</configuration>

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kmall.mapper.MemberMapper">
+
+    <insert id="addMember" parameterType="memberVO">
+        INSERT INTO MEMBERS (MEM_ID, MEM_NAME, MEM_PASSWD, MEM_POSTCODE, MEM_ROADNAME, MEM_ADDR, MEM_ADDR_DETAIL, MEM_TEL, MEM_NICKNAME, MEM_EMAIL_CHECK, MEM_POINT, MEM_REGDATE, MEM_UPDATEDATE, MEM_LASTLOGIN)
+        VALUES (#{mem_id}, #{mem_name}, #{mem_passwd}, #{mem_postcode}, #{mem_roadname}, #{mem_addr}, #{mem_addr_detail}, #{mem_tel}, #{mem_nickname}, #{mem_email_check}, 0, SYSDATE, SYSDATE, SYSDATE)
+    </insert>
+
+    <select id="login" resultType="memberVO">
+        SELECT *
+        FROM MEMBERS
+        WHERE MEM_ID = #{mem_id}
+    </select>
+
+    <update id="updateLastLogin">
+        UPDATE MEMBERS
+        SET MEM_LASTLOGIN = SYSDATE
+        WHERE MEM_ID = #{uid}
+    </update>
+
+    <select id="getPasswd" parameterType="string" resultType="string">
+        SELECT MEM_PASSWD
+        FROM MEMBERS
+        WHERE MEM_ID = #{uid}
+    </select>
+
+    <select id="isIdDuplicated" resultType="int">
+        SELECT COUNT(*)
+        FROM MEMBERS
+        WHERE MEM_ID = #{uid}
+    </select>
+
+    <select id="isNickDuplicated" resultType="int">
+        SELECT COUNT(*)
+        FROM MEMBERS
+        WHERE MEM_NICKNAME = #{nickname}
+    </select>
+
+    <select id="getMember" parameterType="string" resultType="memberVO">
+        SELECT *
+        FROM MEMBERS
+        WHERE MEM_ID = #{uid}
+    </select>
+
+    <update id="updateMember" parameterType="memberVO">
+        UPDATE MEMBERS
+        SET MEM_PASSWD      = #{mem_passwd},
+            MEM_POSTCODE    = #{mem_postcode},
+            MEM_ADDR        = #{mem_addr},
+            MEM_ADDR_DETAIL = #{mem_addr_detail},
+            MEM_ROADNAME    = #{mem_roadname},
+            MEM_POINT       = #{mem_point},
+            MANAGER         = #{manager},
+            MEM_TEL         = #{mem_tel},
+            MEM_NICKNAME    = #{mem_nickname},
+            MEM_EMAIL_CHECK = #{mem_email_check},
+            MEM_UPDATEDATE  = sysdate
+        WHERE MEM_ID = #{mem_id}
+    </update>
+
+    <delete id="quit">
+        DELETE MEMBERS
+        WHERE MEM_ID = #{uid}
+    </delete>
+
+    <select id="getMembers" resultType="memberVO">
+        SELECT *
+        FROM MEMBERS
+    </select>
+
+</mapper>

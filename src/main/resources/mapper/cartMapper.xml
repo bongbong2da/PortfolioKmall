@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kmall.mapper.CartMapper">
+
+    <insert id="addCart" parameterType="cartVO">
+        MERGE INTO CART
+        USING DUAL
+        ON (PRDT_IDX = #{prdt_idx})
+        WHEN MATCHED THEN
+            UPDATE
+            SET cart_amount = cart_amount + #{cart_amount}
+        WHEN NOT MATCHED THEN
+            INSERT
+            VALUES (seq_cart_idx.nextval, #{prdt_idx}, #{mem_id}, #{cart_amount}, #{prdt_name}, #{prdt_price}, #{prdt_discnt}, #{prdt_img})
+    </insert>
+
+    <select id="getCart" resultType="cartVO">
+        SELECT *
+        FROM CART
+        WHERE MEM_ID = #{id}
+    </select>
+
+    <select id="getCartByArray" parameterType="map" resultType="cartVO">
+        select * from cart where PRDT_IDX IN<foreach collection="arr" item="val" open="(" close=")" separator=",">${val}</foreach> AND mem_id = #{id}
+    </select>
+
+    <select id="getCount" resultType="int">
+        SELECT COUNT(*)
+        FROM CART
+        WHERE MEM_ID = #{mem_id}
+    </select>
+
+    <delete id="delete">
+        DELETE CART WHERE PRDT_IDX IN<foreach collection="idx" item="val" open="(" close=")" separator=",">${val}</foreach> AND mem_id = #{mem_id}
+    </delete>
+
+    <update id="setAmount">
+        UPDATE CART
+        SET CART_AMOUNT = #{amount}
+        WHERE CART_IDX = #{cart_idx}
+          AND PRDT_IDX = #{prdt_idx}
+    </update>
+
+</mapper>

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kmall.mapper.StaticMapper">
+
+    <select id="getDailySales" resultType="map">
+        select TO_CHAR(os.OD_DATE, 'YY-MM-DD') as LABEL, sum(od.OD_AMOUNT) as DATA
+        from ORDER_DETAIL od,
+             ORDER_SUMMARY os
+        where od.OD_IDX = os.OD_IDX
+        group by (TO_CHAR(os.OD_DATE, 'YY-MM-DD'))
+        order by TO_CHAR(os.OD_DATE, 'YY-MM-DD') asc
+    </select>
+
+    <select id="getSalesByProduct" resultType="map">
+        select od.PRDT_NAME as LABEL, sum(od.OD_AMOUNT) as DATA
+        from ORDER_DETAIL od
+        group by (od.PRDT_NAME)
+        order by sum(od.OD_AMOUNT) desc
+    </select>
+
+    <select id="getDailySignedUp" resultType="map">
+        select count(*) AS DATA, to_char(MEM_REGDATE, 'mm-dd') as LABEL
+        from MEMBERS
+        group by to_char(MEM_REGDATE, 'mm-dd')
+    </select>
+
+    <select id="getDailyTotal" resultType="map">
+        select sum(OD_TOTAL_PRICE) as DATA, to_char(OD_DATE, 'mm-dd') as LABEL
+        from ORDER_SUMMARY
+        group by to_char(OD_DATE, 'mm-dd')
+        order by to_char(OD_DATE, 'mm-dd') asc
+    </select>
+
+</mapper>

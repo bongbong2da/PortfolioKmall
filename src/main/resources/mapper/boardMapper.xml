@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kmall.mapper.BoardMapper">
+
+    <select id="getList" parameterType="searchCriteria" resultType="boardVO">
+        SELECT BOARD_IDX, BOARD_TITLE, BOARD_CONTENT, MEM_ID, BOARD_REGDATE
+        FROM (SELECT BOARD_IDX, BOARD_TITLE, BOARD_CONTENT, MEM_ID, BOARD_REGDATE, ROW_NUMBER() OVER (ORDER BY BOARD_IDX DESC) RN FROM BOARD <include refid="search"></include>)
+        WHERE RN BETWEEN #{startRow} AND #{endRow}
+    </select>
+
+    <select id="getArticle" parameterType="int" resultType="boardVO">
+        SELECT *
+        FROM BOARD
+        WHERE BOARD_IDX = #{board_idx}
+    </select>
+
+    <select id="getCount" parameterType="searchCriteria" resultType="int">
+        SELECT COUNT(*) FROM BOARD
+        <include refid="search"></include>
+    </select>
+
+    <insert id="write" parameterType="searchCriteria">
+        INSERT INTO BOARD (BOARD_IDX, BOARD_TITLE, BOARD_CONTENT, MEM_ID, BOARD_REGDATE, BOARD_IP)
+        VALUES (SEQ_BOARD_IDX.NEXTVAL, #{board_title}, #{board_content}, #{mem_id}, SYSDATE, #{board_ip})
+    </insert>
+
+    <update id="update" parameterType="searchCriteria">
+        UPDATE BOARD
+        SET BOARD_TITLE   = #{board_title},
+            BOARD_CONTENT = #{board_content}
+        WHERE BOARD_IDX = #{board_idx}
+    </update>
+
+    <delete id="delete">
+        DELETE BOARD
+        WHERE BOARD_IDX IN<foreach collection="idx" item="val" open="(" close=")" separator=",">${val}</foreach>
+    </delete>
+
+    <select id="getArticlesById" resultType="boardVO">
+        SELECT * FROM BOARD WHERE MEM_ID = #{uid}
+    </select>
+
+    <sql id="search">
+        <if test="searchType != null">
+            <if test='searchType == "t"'>
+                WHERE BOARD_TITLE LIKE '%' || #{keyword} || '%'
+            </if>
+            <if test='searchType == "c"'>
+                WHERE BOARD_CONTENT LIKE '%' || #{keyword} || '%'
+            </if>
+            <if test='searchType == "tc"'>
+                WHERE BOARD_TITLE LIKE '%' || #{keyword} || '%' OR BOARD_CONTENT LIKE '%' || #{keyword} || '%'
+            </if>
+        </if>
+    </sql>
+
+</mapper>

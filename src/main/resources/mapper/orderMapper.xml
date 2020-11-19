@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kmall.mapper.OrderMapper">
+
+    <insert id="insertSummary" parameterType="com.kmall.domain.OrderSummaryVO">
+        INSERT INTO ORDER_SUMMARY (OD_IDX, MEM_ID, OD_RECEIVER, OD_POSTCODE, OD_ROADNAME, OD_ADDR, OD_ADDR_DETAIL, OD_TEL, OD_TOTAL_PRICE, OD_USE_POINT, OD_METHOD)
+        VALUES (SEQ_OD_IDX.NEXTVAL, #{mem_id}, #{od_receiver}, #{od_postcode}, #{od_roadname}, #{od_addr}, #{od_addr_detail}, #{od_tel}, #{od_total_price}, #{od_use_point}, #{od_method})
+        <selectKey keyProperty="od_idx" resultType="Integer" order="AFTER">
+            SELECT SEQ_OD_IDX.CURRVAL FROM DUAL
+        </selectKey>
+    </insert>
+
+    <insert id="insertDetail" parameterType="com.kmall.domain.OrderDetailVO">
+        INSERT INTO ORDER_DETAIL (OD_IDX, PRDT_IDX, PRDT_NAME, OD_AMOUNT, OD_PRICE)
+        VALUES (#{od_idx}, #{prdt_idx}, #{prdt_name}, #{od_amount}, #{od_price})
+    </insert>
+
+    <select id="getSummaryList" resultType="orderSummaryVO">
+        SELECT OD_IDX,
+        MEM_ID,
+        OD_RECEIVER,
+        OD_POSTCODE,
+        OD_ADDR,
+        OD_ADDR_DETAIL,
+        OD_TEL,
+        OD_TOTAL_PRICE,
+        OD_USE_POINT,
+        OD_METHOD,
+        OD_SHIPPING_NUM,
+        OD_SHIPPING_STAT,
+        OD_DATE,
+        OD_ROADNAME
+            FROM
+        (SELECT OD_IDX,
+        MEM_ID,
+        OD_RECEIVER,
+        OD_POSTCODE,
+        OD_ADDR,
+        OD_ADDR_DETAIL,
+        OD_TEL,
+        OD_TOTAL_PRICE,
+        OD_USE_POINT,
+        OD_METHOD,
+        OD_SHIPPING_NUM,
+        OD_SHIPPING_STAT,
+        OD_DATE,
+        OD_ROADNAME,
+        row_number() over (order by od_idx desc) as rn
+        FROM ORDER_SUMMARY
+        <include refid="search"></include>)
+        WHERE RN BETWEEN #{cri.startRow} AND #{cri.endRow}
+        ORDER BY OD_IDX DESC
+    </select>
+
+    <select id="getSummary" resultType="orderSummaryVO">
+        SELECT *
+        FROM ORDER_SUMMARY
+        WHERE OD_IDX = #{idx}
+    </select>
+
+    <select id="getDetailList" resultType="orderDetailVO">
+        SELECT *
+        FROM ORDER_DETAIL
+        WHERE OD_IDX = #{idx}
+        ORDER BY PRDT_IDX DESC
+    </select>
+
+    <select id="getCount" resultType="int">
+        SELECT COUNT(*) FROM ORDER_SUMMARY <include refid="search"></include>
+    </select>
+
+    <update id="updateSummary">
+        UPDATE ORDER_SUMMARY SET OD_SHIPPING_NUM = #{summary.od_shipping_num}, OD_SHIPPING_STAT = #{summary.od_shipping_stat} <include refid="updateCondition"></include>
+    </update>
+
+    <update id="editReceiveInfo">
+        UPDATE ORDER_SUMMARY SET OD_POSTCODE = #{od_postcode}, OD_ROADNAME = #{od_roadname}, OD_ADDR = #{od_addr}, OD_ADDR_DETAIL = #{od_addr_detail} WHERE OD_IDX = #{od_idx}
+    </update>
+
+    <update id="cancelOrder">
+        UPDATE ORDER_SUMMARY SET OD_SHIPPING_STAT = '주문취소' WHERE OD_IDX = #{od_idx}
+    </update>
+
+    <select id="getRecentOrders" resultType="orderSummaryVO">
+        SELECT OD_IDX,
+               MEM_ID,
+               OD_RECEIVER,
+               OD_POSTCODE,
+               OD_ADDR,
+               OD_ADDR_DETAIL,
+               OD_TEL,
+               OD_TOTAL_PRICE,
+               OD_USE_POINT,
+               OD_METHOD,
+               OD_SHIPPING_NUM,
+               OD_SHIPPING_STAT,
+               OD_DATE,
+               OD_ROADNAME
+        FROM
+            (SELECT OD_IDX,
+                    MEM_ID,
+                    OD_RECEIVER,
+                    OD_POSTCODE,
+                    OD_ADDR,
+                    OD_ADDR_DETAIL,
+                    OD_TEL,
+                    OD_TOTAL_PRICE,
+                    OD_USE_POINT,
+                    OD_METHOD,
+                    OD_SHIPPING_NUM,
+                    OD_SHIPPING_STAT,
+                    OD_DATE,
+                    OD_ROADNAME,
+                    ROW_NUMBER() over (ORDER BY OD_DATE DESC) AS RN
+             FROM ORDER_SUMMARY)
+        WHERE RN BETWEEN 1 AND 10
+    </select>
+
+    <sql id="search">
+        <if test="id != null">
+            WHERE MEM_ID = #{id}
+        </if>
+        <if test="cri != null">
+            <if test="cri.searchType == 'id'">
+                WHERE MEM_ID LIKE '%' || #{cri.keyword} || '%'
+            </if>
+
+            <if test="cri.searchType == 'idx'">
+                WHERE OD_IDX LIKE '%' || #{cri.keyword} || '%'
+            </if>
+
+            <if test="cri.searchType == 'stat'">
+                WHERE OD_SHIPPING_STAT = #{cri.keyword}
+            </if>
+
+            <if test="cri.searchType == 'date'">
+                WHERE OD_DATE BETWEEN TO_DATE(#{cri.startDate}) AND TO_DATE(#{cri.endDate})
+            </if>
+        </if>
+    </sql>
+
+    <sql id="updateCondition">
+        <if test="idx == null">
+            WHERE OD_IDX = #{summary.od_idx}
+        </if>
+        <if test="idx != null">
+            WHERE OD_IDX IN <foreach collection="idx" item="val" open="(" close=")" separator=",">${val}</foreach>
+        </if>
+    </sql>
+
+</mapper>

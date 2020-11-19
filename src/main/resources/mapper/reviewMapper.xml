@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kmall.mapper.ReviewMapper">
+    <select id="getReviews" resultType="reviewVO">
+        SELECT *
+        FROM REVIEW
+        WHERE PRDT_IDX = #{idx}
+        ORDER BY REVIEW_IDX DESC
+    </select>
+
+    <select id="getAllReviews" resultType="reviewVO">
+        SELECT * FROM REVIEW
+        ORDER BY REVIEW_IDX DESC
+    </select>
+
+    <select id="getReview" resultType="reviewVO">
+        SELECT *
+        FROM REVIEW
+        WHERE REVIEW_IDX = #{idx}
+    </select>
+
+    <select id="isDuplicated" parameterType="map" resultType="reviewVO">
+        SELECT *
+        FROM REVIEW
+        WHERE PRDT_IDX = #{prdt_idx} AND OD_IDX = #{od_idx} AND MEM_ID = #{uid}
+    </select>
+
+    <insert id="insertReview">
+        INSERT INTO REVIEW (REVIEW_IDX, MEM_ID, OD_IDX, PRDT_IDX, REVIEW_IMG, REVIEW_CONTENT, REVIEW_RATING)
+        VALUES (SEQ_REVIEW_IDX.nextval, #{mem_id}, #{od_idx}, #{prdt_idx}, #{review_img}, #{review_content}, #{review_rating})
+    </insert>
+
+    <delete id="deleteReview">
+        DELETE REVIEW WHERE REVIEW_IDX IN<foreach collection="arr" item="val" open="(" close=")" separator=",">${val}</foreach>
+    </delete>
+
+    <select id="getReviewsById" resultType="reviewVO">
+        SELECT * FROM REVIEW WHERE MEM_ID = #{uid}
+    </select>
+
+    <select id="getRecentReviews" resultType="reviewVO">
+        select REVIEW_IDX,
+               MEM_ID,
+               PRDT_IDX,
+               REVIEW_CONTENT,
+               REVIEW_RATING,
+               REVIEW_REGDATE,
+               OD_IDX,
+               REVIEW_IMG
+        FROM (select REVIEW_IDX,
+                     MEM_ID,
+                     PRDT_IDX,
+                     REVIEW_CONTENT,
+                     REVIEW_RATING,
+                     REVIEW_REGDATE,
+                     OD_IDX,
+                     REVIEW_IMG,
+                     ROW_NUMBER() over (order by REVIEW_REGDATE desc) as rn
+              from REVIEW)
+        where rn between 1 and 10
+    </select>
+
+</mapper>

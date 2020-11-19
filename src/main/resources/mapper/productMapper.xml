@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kmall.mapper.ProductMapper">
+
+    <select id="getProducts" parameterType="productCriteria" resultType="productVO">
+        SELECT prdt_idx,
+        cate_curr,
+        prdt_name,
+        prdt_price,
+        prdt_discnt,
+        prdt_company,
+        prdt_detail,
+        prdt_img,
+        prdt_stock,
+        prdt_buyable,
+        prdt_regdate,
+        prdt_updatedate
+        FROM (
+        SELECT prdt_idx,
+        cate_curr,
+        prdt_name,
+        prdt_price,
+        prdt_discnt,
+        prdt_company,
+        prdt_detail,
+        prdt_img,
+        prdt_stock,
+        prdt_buyable,
+        prdt_regdate,
+        prdt_updatedate,
+        Row_number() OVER(ORDER BY prdt_idx DESC) rn
+        FROM products <include refid="search"></include>)
+        WHERE rn BETWEEN #{startRow} AND #{endRow}
+    </select>
+
+    <select id="getProduct" resultType="productVO">
+        SELECT *
+        FROM PRODUCTS
+        WHERE PRDT_IDX = #{prdt_idx}
+    </select>
+
+    <insert id="register" parameterType="productVO">
+        INSERT INTO PRODUCTS (PRDT_IDX, CATE_CURR, PRDT_NAME, PRDT_PRICE, PRDT_DISCNT, PRDT_COMPANY, PRDT_DETAIL, PRDT_IMG, PRDT_STOCK, PRDT_BUYABLE, PRDT_REGDATE, PRDT_UPDATEDATE)
+        VALUES (SEQ_PRDT_IDX.NEXTVAL, #{cate_curr}, #{prdt_name}, #{prdt_price}, #{prdt_discnt}, #{prdt_company}, to_clob(#{prdt_detail}), #{prdt_img}, #{prdt_stock}, 'Y', SYSDATE, SYSDATE)
+    </insert>
+
+    <select id="getDetail" resultType="java.lang.String">
+        SELECT PRDT_DETAIL
+        FROM PRODUCTS
+        WHERE PRDT_IDX = #{prdt_idx}
+    </select>
+
+    <select id="getCount" parameterType="productCriteria" resultType="int">
+        SELECT COUNT(*) FROM PRODUCTS
+        <include refid="search"></include>
+    </select>
+
+    <delete id="delete">
+        DELETE PRODUCTS
+        WHERE PRDT_IDX = #{prdt_idx}
+    </delete>
+
+    <insert id="modify" parameterType="productVO">
+        UPDATE PRODUCTS
+        SET CATE_CURR       = #{cate_curr},
+            PRDT_NAME       = #{prdt_name},
+            PRDT_PRICE      = #{prdt_price},
+            PRDT_DISCNT     = #{prdt_discnt},
+            PRDT_COMPANY    = #{prdt_company},
+            PRDT_DETAIL     = #{prdt_detail},
+            PRDT_IMG        = #{prdt_img},
+            PRDT_STOCK      = #{prdt_stock},
+            PRDT_UPDATEDATE = SYSDATE
+        WHERE PRDT_IDX = #{prdt_idx}
+    </insert>
+
+    <select id="getCategory" resultType="categoryVO">
+        SELECT * FROM CATEGORIES WHERE CATE_CURR = #{cate_curr}
+    </select>
+
+    <insert id="addCategory">
+        INSERT INTO CATEGORIES (CATE_CURR, CATE_PRNT, CATE_NAME)
+        VALUES (#{cate_curr}, #{cate_prnt, jdbcType=VARCHAR}, #{cate_name})
+    </insert>
+
+    <update id="editCategoryName">
+        UPDATE CATEGORIES SET CATE_NAME = #{cate_name} WHERE CATE_CURR = #{cate_curr}
+    </update>
+
+    <delete id="deleteCategory">
+        DELETE CATEGORIES
+        WHERE CATE_CURR = #{cate_curr}
+    </delete>
+
+    <select id="getCategories" resultType="categoryVO">
+        SELECT *
+        FROM CATEGORIES
+        WHERE CATE_PRNT IS NULL
+        ORDER BY CATE_CURR ASC
+    </select>
+
+    <select id="getCategoriesByName" parameterType="productCriteria">
+        SELECT *
+        FROM CATEGORIES
+        WHERE CATE_NAME LIKE '%' || #{cateogry} || '%'
+    </select>
+
+    <select id="getChildCategories" resultType="categoryVO">
+        SELECT *
+        FROM CATEGORIES
+        WHERE CATE_PRNT = #{category}
+        ORDER BY CATE_CURR ASC
+    </select>
+
+    <select id="getByCategory" resultType="productVO">
+        SELECT *
+        FROM PRODUCTS
+        WHERE CATE_CURR = #{cate_curr}
+    </select>
+
+    <select id="getCategoryName" resultType="String">
+        SELECT CATE_NAME
+        FROM CATEGORIES
+        WHERE CATE_CURR = #{category}
+    </select>
+
+    <select id="getPopProducts" parameterType="map" resultType="productVO">
+        --인기상품 SELECT 쿼리
+        <bind name="count" value="count"/>
+        <bind name="keyword" value="cri.keyword"/>
+        <bind name="category" value="cri.category"/>
+        select PRDT_IDX,
+        CATE_CURR,
+        PRDT_NAME,
+        PRDT_PRICE,
+        PRDT_DISCNT,
+        PRDT_COMPANY,
+        PRDT_IMG,
+        PRDT_STOCK,
+        PRDT_BUYABLE,
+        PRDT_REGDATE,
+        PRDT_UPDATEDATE
+        from (
+        select p.PRDT_IDX,
+        p.CATE_CURR,
+        p.PRDT_NAME,
+        p.PRDT_PRICE,
+        p.PRDT_DISCNT,
+        p.PRDT_COMPANY,
+        p.PRDT_IMG,
+        p.PRDT_STOCK,
+        p.PRDT_BUYABLE,
+        p.PRDT_REGDATE,
+        p.PRDT_UPDATEDATE,
+        row_number() over (order by count(p.PRDT_IDX) desc) as rn
+        from ORDER_DETAIL od,
+        PRODUCTS p
+        <include refid="popSearch"></include>
+        group by p.PRDT_IDX, p.CATE_CURR, p.PRDT_NAME, p.PRDT_PRICE, p.PRDT_DISCNT, p.PRDT_COMPANY, p.PRDT_IMG, p.PRDT_STOCK, p.PRDT_BUYABLE, p.PRDT_REGDATE, p.PRDT_UPDATEDATE
+        order by count(p.PRDT_IDX) desc
+        )
+        where rn between 1 AND #{count}
+    </select>
+
+    <select id="getNewProducts" resultType="productVO">
+        --신상품 SELECT 쿼리
+        SELECT PRDT_IDX,
+               CATE_CURR,
+               PRDT_NAME,
+               PRDT_PRICE,
+               PRDT_DISCNT,
+               PRDT_COMPANY,
+               PRDT_DETAIL,
+               PRDT_IMG,
+               PRDT_STOCK,
+               PRDT_BUYABLE,
+               PRDT_REGDATE
+                ,
+               PRDT_UPDATEDATE
+        FROM (SELECT PRDT_IDX,
+                     CATE_CURR,
+                     PRDT_NAME,
+                     PRDT_PRICE,
+                     PRDT_DISCNT,
+                     PRDT_COMPANY,
+                     PRDT_DETAIL,
+                     PRDT_IMG,
+                     PRDT_STOCK,
+                     PRDT_BUYABLE,
+                     PRDT_REGDATE,
+                     PRDT_UPDATEDATE,
+                     ROW_NUMBER() OVER ( ORDER BY PRDT_REGDATE
+                         DESC) AS RN
+              FROM PRODUCTS)
+        WHERE RN BETWEEN 1 AND #{count}
+    </select>
+
+    <update id="updateStock">
+        UPDATE PRODUCTS SET PRDT_STOCK = #{prdt_stock}, PRDT_BUYABLE = #{prdt_buyable} WHERE PRDT_IDX = #{prdt_idx}
+    </update>
+
+    <sql id="search">
+        <if test='category == "" and keyword != ""'>
+            WHERE PRDT_NAME LIKE '%' || #{keyword} || '%'
+        </if>
+
+        <if test='category != "" and keyword == ""'>
+            WHERE CATE_CURR = #{category} OR CATE_CURR LIKE #{category} || '%'
+        </if>
+
+        <if test='category != "" and keyword != ""'>
+            WHERE PRDT_NAME LIKE '%' || #{keyword} || '%' AND CATE_CURR LIKE #{category} || '%'
+        </if>
+    </sql>
+
+    <sql id="popSearch">
+        <if test='category == "" and keyword != ""'>
+            WHERE p.prdt_idx = od.prdt_idx AND (p.PRDT_NAME LIKE '%' || #{keyword} || '%')
+        </if>
+
+        <if test='category != "" and keyword == ""'>
+            WHERE p.prdt_idx = od.prdt_idx AND (p.CATE_CURR = #{category} OR p.CATE_CURR LIKE #{category} || '%')
+        </if>
+
+        <if test='category != "" and keyword != ""'>
+            WHERE p.prdt_idx = od.prdt_idx AND (p.PRDT_NAME LIKE '%' || #{keyword} || '%' AND p.CATE_CURR LIKE #{category} || '%')
+        </if>
+
+        <if test='category == "" and keyword == ""'>
+            WHERE P.PRDT_IDX = OD.PRDT_IDX
+        </if>
+    </sql>
+</mapper>
